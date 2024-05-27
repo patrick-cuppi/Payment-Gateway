@@ -2,6 +2,7 @@ import * as Yup from "yup";
 import parsePhoneNumber from "libphonenumber-js";
 import { cpf, cnpj } from "cpf-cnpj-validator";
 import Cart from "../models/Cart";
+import TransactionService from "../services/TransactionService";
 
 class TransactionsController {
     async create(req, res) {
@@ -65,20 +66,47 @@ class TransactionsController {
                 return res.status(400).json({
                     error: "Error on validate schema!"
                 })
-            }
+            };
 
             const cart = Cart.findOne({ code: cartCode });
             if(!cart) {
                 return res.status(404).json();
-            }
+            };
 
-            return res.status(200).json();
+            const service = new TransactionService();
+            const response = await service.process({
+                cartCode,
+                paymentType,
+                installments,
+                customer: {
+                    name: customerName,
+                    email: customerEmail,
+                    mobile: customerMobile,
+                    document: customerDocument,
+                },
+                billing: {
+                    address: billingAddress,
+                    number: billingNumber,
+                    neighborhood: billingNeighborhood,
+                    city: billingCity,
+                    state: billingState,
+                    zipcode: billingZipCode,
+                },
+                creditCard: {
+                    number: creditCardNumber,
+                    expiration: creditCardExpiration,
+                    holdername: creditCardHolderName,
+                    cvv: creditCardCvv,
+                },
+            });
+
+            return res.status(200).json(response);
 
         } catch (err) {
             console.error(err);
             return res.status(500).json({ error: "Internal server error." });
-        }
-    }
-}
+        };
+    };
+};
 
 export default new TransactionsController();
