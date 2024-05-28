@@ -1,4 +1,5 @@
 import { cpf } from "cpf-cnpj-validator";
+import pagarme from "pagarme";
 
 class PagarMeProvider {
     async process({
@@ -21,6 +22,7 @@ class PagarMeProvider {
             payment_method: 'credit_card',
             amount: total * 100,
             installments,
+            card_holder_name: creditCard.holderName,
             card_number: creditCard.number.replace(/[^?0-9]/g, ''),
             card_expiration_date: creditCard.expiration.replace(/[^?0-9]/g, ''),
             card_cvv: creditCard.cvv,
@@ -69,7 +71,7 @@ class PagarMeProvider {
                     neighborhood: billing.neighborhood,
                     street: billing.address,
                     street_number: billing.number,
-                    zipcode: billing.zipcode,
+                    zipcode: billing.zipcode.replace(/[^?0-9]/g, ''),
                 }
             }
         } : { };
@@ -110,7 +112,13 @@ class PagarMeProvider {
             ...metadataParams,
         };
 
-        
+        const client = await pagarme.client.connect({
+            api_key: process.env.PAGARME_API_KEY,
+        });
+
+        const response = await client.transactions.create(transactionParams);
+
+        console.debug('response', response);
     };
 };
 
