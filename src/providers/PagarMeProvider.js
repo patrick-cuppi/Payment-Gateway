@@ -118,8 +118,34 @@ class PagarMeProvider {
 
         const response = await client.transactions.create(transactionParams);
 
-        console.debug('response', response);
+        return {
+            transactionId: response.id,
+            status: this.translateStatus(response.status),
+            billet: {
+                url: response.boleto_url,
+                barCode: response.boleto_barcode,
+            },
+            card: {
+                id: response.card?.id,
+            },
+            processorResponse: JSON.stringify(response),
+        };
     };
+
+    translateStatus(status) {
+        const statusMap = {
+            processing: 'processing',
+            waiting_payment: 'pending',
+            authorized: 'pending',
+            paid: 'approved',
+            refused: 'refused',
+            pending_refund: 'refunded',
+            refunded: 'refunded',
+            chargeback: 'chargeback',
+        };
+
+        return statusMap[status];
+    }
 };
 
 export default PagarMeProvider;
